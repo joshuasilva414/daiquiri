@@ -1,11 +1,28 @@
 import cv2
 import face_recognition
 import numpy as np
+import sys
+from pathlib import Path
 
-video_capture = cv2.VideoCapture(0)
+# Avoid importing the local ./libcamera source tree by mistake.
+repo_root = str(Path(__file__).resolve().parent)
+sys.path = [p for p in sys.path if p not in ("", repo_root)]
+dist_packages = "/usr/lib/python3/dist-packages"
+if dist_packages not in sys.path:
+    sys.path.insert(0, dist_packages)
+from picamera2 import Picamera2
 
-if not video_capture.isOpened():
-    raise RuntimeError("Could not open video capture device")
+picam2 = Picamera2()
+
+config = picam2.create_preview_configuration(main={'format': 'BGR888', 'size': (640, 480)})
+picam2.configure(config)
+
+picam2.start()
+
+# video_capture = cv2.VideoCapture(0)
+
+# if not video_capture.isOpened():
+#     raise RuntimeError("Could not open video capture device")
 
 josh_image = face_recognition.load_image_file("josh.jpg")
 josh_face_encoding = face_recognition.face_encodings(josh_image)[0]
@@ -19,7 +36,7 @@ process_this_frame = True
 
 while True:
     # Grab a single frame of video
-    ret, frame = video_capture.read()
+    frame = picam2.capture_array()
 
     # Only process every other frame of video to save time
     if process_this_frame:
@@ -50,7 +67,7 @@ while True:
             face_distances = face_recognition.face_distance(known_faces, face_encoding)
             best_match_index = np.argmin(face_distances)
             if matches[best_match_index]:
-                name = known_faces[best_match_index]
+                name = known_names[best_match_index]
 
             face_names.append(name)
 
@@ -82,5 +99,5 @@ while True:
         break
 
 # Release handle to the webcam
-video_capture.release()
+picam2.stop()
 cv2.destroyAllWindows()
