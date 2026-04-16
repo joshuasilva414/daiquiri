@@ -1,9 +1,11 @@
 import { ToolLoopAgent, tool } from "ai";
 import { z } from 'zod';
 import { dacAiModel } from "./model";
+import { systemPrompt } from "./prompts/system";
 
 export const daiquiriAgent = new ToolLoopAgent({
     model: dacAiModel,
+    instructions: systemPrompt,
     tools: {
         weather: tool({
             description: 'Get the weather in a location (in Fahrenheit)',
@@ -26,4 +28,4 @@ export const daiquiriAgent = new ToolLoopAgent({
             },
         }),
     },
-})
+});
